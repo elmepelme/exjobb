@@ -26,7 +26,7 @@ for i = 2:(s_nbr_points - 1)
     for j = 2:y_nbr_points
         s_point = s_points(i);
         y_point = y_points(j);
-        u_xt = u_xt + g(s_point, y_point) * normrnd(0, mu_A);
+        u_xt = u_xt + g(s_point, y_point) * sqrt(mu_A) * normrnd(0, 1);
     end
 end
 end
