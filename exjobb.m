@@ -21,7 +21,7 @@ figure
 surf(bs)
 a = load('bs_100x100_100_1_1.mat');
 
-%% Stokastisk integral brute force
+%% Stokastisk integral brute force (riktig seg och dålig)
 dx = 1/20;
 dt = 1/20;
 D = 100;
@@ -43,3 +43,66 @@ end
 figure
 surf(u)
 
+%% Euler-Maruyama
+dx = 1/50;
+dt = 1/50;
+mu_A = dt * dx;
+D = 100; %diamter av integration
+X = 1; % x gränser för utvärdering
+T = 1;
+G = @(t, s, x, y) exp(-((x - y).^2) ./ (4*(t - s))) ./ ((4*pi*(t - s)).^(1/2));
+t_nbr_points = T/(dt);
+t_points = linspace(0, T, t_nbr_points);
+% + 1 kanske inte behövs
+y_nbr_points = 2*D/(dx) + 1;
+y_points = linspace(-D,D,y_nbr_points);
+x_nbr_points = 2*X/(dx) + 1;
+x_points = linspace(-X,X,x_nbr_points);
+%%
+u = zeros(t_nbr_points, x_nbr_points);
+% vi evaluerar funktionen i nedre högra punkten pga singulariteten
+for i = 1:x_nbr_points
+    i
+    for j = 2:t_nbr_points
+        sum = 0;
+        for k = 1:y_nbr_points
+            sum = sum + ... 
+                G(t_points(j), t_points(j-1), x_points(i), y_points(k)) * ...
+                sqrt(mu_A) * normrnd(0,1);
+        end
+        u(j,i) = u(j-1, i) + sum;
+    end
+end
+
+
+%% Plotting
+close all
+figure;
+set(gcf, 'Color', 'w');  
+
+v = VideoWriter('temperature_over_time.avi');
+open(v);
+for t = 1:size(u, 1)
+    p = plot(x_points, u(t, :), 'LineWidth', 2);
+    p.Color = [1, 0.592, 0];  
+    
+    title(['Time = ', num2str(t_points(t))], 'Interpreter', 'latex', 'FontSize', 18);
+    xlabel('Space', 'Interpreter', 'latex', 'FontSize', 14);
+    ylabel('Temperature', 'Interpreter', 'latex', 'FontSize', 14);
+    ylim([-4 4])
+    set(gca, 'FontSize', 12); 
+    set(gca, 'LineWidth', 1.5);
+    box on;  
+    drawnow; 
+    pause(0.1);
+    frame = getframe(gcf);  % Capture the plot as a frame
+    writeVideo(v, frame);
+end
+close(v);  % Close the video file
+%% 
+close all
+figure
+surf(x_points, t_points, u)
+title('$u(t,x) = \int_0^t \int_{R}\frac{e^{-\frac{|x-y|^2}{4(t-s)}}}{(4\pi|t-s|)^{n/2}}W(dyds)$', 'Interpreter', 'latex', 'FontSize', 16);
+xlabel('x', 'Interpreter', 'latex', 'FontSize', 14);
+ylabel('t', 'Interpreter', 'latex', 'FontSize', 14);
