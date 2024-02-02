@@ -44,19 +44,20 @@ figure
 surf(u)
 
 %% Euler-Maruyama
-dx = 1/50;
-dt = 1/50;
-mu_A = dt * dx;
-D = 100; %diamter av integration
+dy = 1/20;
+dt = 1/20;
+dx = dt^2;
+mu_A = dt * dy;
+D = 8; %diamter av integration
 X = 1; % x gränser för utvärdering
 T = 1;
 G = @(t, s, x, y) exp(-((x - y).^2) ./ (4*(t - s))) ./ ((4*pi*(t - s)).^(1/2));
 t_nbr_points = T/(dt);
 t_points = linspace(0, T, t_nbr_points);
 % + 1 kanske inte behövs
-y_nbr_points = 2*D/(dx) + 1;
+y_nbr_points = 2*D/(dy);
 y_points = linspace(-D,D,y_nbr_points);
-x_nbr_points = 2*X/(dx) + 1;
+x_nbr_points = int16(2*X/(dx));
 x_points = linspace(-X,X,x_nbr_points);
 %%
 u = zeros(t_nbr_points, x_nbr_points);
@@ -80,8 +81,8 @@ close all
 figure;
 set(gcf, 'Color', 'w');  
 
-v = VideoWriter('temperature_over_time.avi');
-open(v);
+%v = VideoWriter('temperature_over_time.avi');
+%open(v);
 for t = 1:size(u, 1)
     p = plot(x_points, u(t, :), 'LineWidth', 2);
     p.Color = [1, 0.592, 0];  
@@ -95,10 +96,10 @@ for t = 1:size(u, 1)
     box on;  
     drawnow; 
     pause(0.1);
-    frame = getframe(gcf);  % Capture the plot as a frame
-    writeVideo(v, frame);
+%    frame = getframe(gcf);  % Capture the plot as a frame
+%    writeVideo(v, frame);
 end
-close(v);  % Close the video file
+%close(v);  % Close the video file
 %% 
 close all
 figure
@@ -106,3 +107,47 @@ surf(x_points, t_points, u)
 title('$u(t,x) = \int_0^t \int_{R}\frac{e^{-\frac{|x-y|^2}{4(t-s)}}}{(4\pi|t-s|)^{n/2}}W(dyds)$', 'Interpreter', 'latex', 'FontSize', 16);
 xlabel('x', 'Interpreter', 'latex', 'FontSize', 14);
 ylabel('t', 'Interpreter', 'latex', 'FontSize', 14);
+
+%% Plotting
+close all
+figure;
+set(gcf, 'Color', 'w');  
+
+%v = VideoWriter('temperature_over_time.avi');
+%open(v);
+for x = 1:size(u, 2)
+    p = plot(t_points, u(:, x), 'LineWidth', 2);
+    p.Color = [1, 0.592, 0];  
+    
+    title(['Space = ', num2str(x_points(x))], 'Interpreter', 'latex', 'FontSize', 18);
+    xlabel('Time', 'Interpreter', 'latex', 'FontSize', 14);
+    ylabel('Temperature', 'Interpreter', 'latex', 'FontSize', 14);
+    ylim([-4 4])
+    set(gca, 'FontSize', 12); 
+    set(gca, 'LineWidth', 1.5);
+    box on;  
+    drawnow; 
+    pause(0.1);
+%    frame = getframe(gcf);  % Capture the plot as a frame
+%    writeVideo(v, frame);
+end
+%close(v);  % Close the video file
+
+
+%% covariance
+
+CovM = @(t,s,x,y) (1/sqrt(2*pi))* (sqrt(t + s)*exp((abs(x-y)^2)/(2*(t+s))) ...
+- sqrt(abs(t - s))*exp(-(abs(x-y)^2)/(2*abs(t-s)))) ...
++ (x-y)*(cdf('Normal', (x-y)/sqrt(s+t), 0, 1) - cdf('Normal', (x-y)/sqrt(abs(t-s)), 0, 1));
+
+Cov = @(t,s,tau) (1/sqrt(2*pi)) .* (sqrt(t + s).*exp(-(abs(tau).^2)/(2.*(t+s))) ...
+- sqrt(abs(t - s)).*exp(-(abs(tau).^2)/(2.*abs(tau)))) ...
++ (tau).*(cdf('Normal', (tau)./sqrt(s+t), 0, 1) - cdf('Normal', (tau)./sqrt(abs(t-s)), 0, 1));
+
+t_p = 0;
+s_p = 1;
+D = 10;
+tau_points = linspace(-D, D, 10000);
+figure
+plot(tau_points, Cov(t_p,s_p, tau_points))
+
