@@ -1,25 +1,35 @@
-%% Brownian Sheet pointwise
-% Skapar pointwise lakan m.h.a KL-expansion
+
 
 n = 10;
 T = 1;
-D = 1;
+D = 8;
 t = linspace(0,T,1000);
-x = linspace(0,D,1000);
+x = linspace(-D,D,1000);
 %sizebs = size(t,2)*size(x,2);
 bs = zeros(size(t,2), size(x,2));
+%% Brownian Sheet pointwise
+% Skapar pointwise lakan m.h.a KL-expansionWN = zeros(size(t,2), size(x,2));
 for i = 1:size(t,2)
     i
     for j = 1:size(x,2)
         bs(i,j) = wn(t(i), x(j), n, T, D);
     end
 end
-
+%% White Noise approximation (term-wise differentiation of BS-KL)
+%sizebs = size(t,2)*size(x,2);
+WN = zeros(size(t,2), size(x,2));
+for i = 1:size(t,2)
+    i
+    for j = 1:size(x,2)
+        WN(i,j) = w_hat(t(i), x(j), n, T, D);
+    end
+end
 
 %%
-figure
-surf(bs)
-a = load('bs_100x100_100_1_1.mat');
+
+h = surf(t,x , bs)
+set(h,'LineStyle','none')
+%a = load('WN_100x100_100_1_1.mat');
 
 %% Stokastisk integral brute force (riktig seg och dålig)
 dx = 1/20;
@@ -44,21 +54,22 @@ figure
 surf(u)
 
 %% Euler-Maruyama
-dy = 1/20;
-dt = 1/20;
-dx = dt^2;
-mu_A = dt * dy;
+dx = 1/150;
+dt = 1/200;
+mu_A = dt * dx;
 D = 8; %diamter av integration
 X = 1; % x gränser för utvärdering
-T = 1;
+T = 10;
 G = @(t, s, x, y) exp(-((x - y).^2) ./ (4*(t - s))) ./ ((4*pi*(t - s)).^(1/2));
 t_nbr_points = T/(dt);
 t_points = linspace(0, T, t_nbr_points);
 % + 1 kanske inte behövs
-y_nbr_points = 2*D/(dy);
+y_nbr_points = 2*D/(dx) + 1;
 y_points = linspace(-D,D,y_nbr_points);
-x_nbr_points = int16(2*X/(dx));
+x_nbr_points = 2*X/(dx) + 1;
 x_points = linspace(-X,X,x_nbr_points);
+%%
+white_noise_A = normrnd(zeros(t_nbr_points, y_nbr_points), 1);
 %%
 u = zeros(t_nbr_points, x_nbr_points);
 % vi evaluerar funktionen i nedre högra punkten pga singulariteten
@@ -69,7 +80,7 @@ for i = 1:x_nbr_points
         for k = 1:y_nbr_points
             sum = sum + ... 
                 G(t_points(j), t_points(j-1), x_points(i), y_points(k)) * ...
-                sqrt(mu_A) * normrnd(0,1);
+                sqrt(dx*dt)*white_noise_A(j,k);
         end
         u(j,i) = u(j-1, i) + sum;
     end
@@ -90,7 +101,7 @@ for t = 1:size(u, 1)
     title(['Time = ', num2str(t_points(t))], 'Interpreter', 'latex', 'FontSize', 18);
     xlabel('Space', 'Interpreter', 'latex', 'FontSize', 14);
     ylabel('Temperature', 'Interpreter', 'latex', 'FontSize', 14);
-    ylim([-4 4])
+    ylim([-0.04 0.04])
     set(gca, 'FontSize', 12); 
     set(gca, 'LineWidth', 1.5);
     box on;  
@@ -103,7 +114,8 @@ end
 %% 
 close all
 figure
-surf(x_points, t_points, u)
+h = surf(x_points, t_points, u)
+set(h,'LineStyle','none')
 title('$u(t,x) = \int_0^t \int_{R}\frac{e^{-\frac{|x-y|^2}{4(t-s)}}}{(4\pi|t-s|)^{n/2}}W(dyds)$', 'Interpreter', 'latex', 'FontSize', 16);
 xlabel('x', 'Interpreter', 'latex', 'FontSize', 14);
 ylabel('t', 'Interpreter', 'latex', 'FontSize', 14);
@@ -150,4 +162,3 @@ D = 10;
 tau_points = linspace(-D, D, 10000);
 figure
 plot(tau_points, Cov(t_p,s_p, tau_points))
-
