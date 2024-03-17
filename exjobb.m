@@ -162,3 +162,31 @@ D = 10;
 tau_points = linspace(-D, D, 10000);
 figure
 plot(tau_points, Cov(t_p,s_p, tau_points))
+
+%% white-coloured noise
+dx = 1/10;
+dt = 1/10;
+mu_A = dt * dx;
+D = 5; %diamter av integration
+X = 1; % x gränser för utvärdering
+T = 1;
+G = @(t, s, x, y) exp(-((x - y).^2) ./ (4*(t - s))) ./ ((4*pi*(t - s)).^(1/2));
+alpha = 3;
+d = 1;
+f = @(x,y) 2.^(d-alpha).*pi.^(d/2).*(gamma((d-alpha)/2))/(gamma(alpha/2)) .* abs(x-y).^(-d+alpha);
+t_nbr_points = T/(dt);
+t_points = linspace(0, T, t_nbr_points);
+% + 1 kanske inte behövs
+y_nbr_points = 2*D/(dx) + 1;
+y_points = linspace(-D,D,y_nbr_points);
+x_nbr_points = 2*X/(dx) + 1;
+x_points = linspace(-X,X,x_nbr_points);
+
+%% calculating variances of coloured noise
+coloured_variances = zeros(t_nbr_points, y_nbr_points);
+for i = 2:t_nbr_points
+    for j = 1:(y_nbr_points -1)
+        coloured_variances(i,j) = t_points(i)*integral2(f, y_points(j), y_points(j + 1), y_points(j), y_points(j + 1));
+    end
+end
+
