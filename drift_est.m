@@ -17,7 +17,7 @@ plot(t_points, u_time)
 %% Drift parameter estimation
 alpha = 2;
 c1alpha = (1/(2*pi*(alpha - 1)))*gamma(1/alpha);
-c2alpha = c1alpha * 2^(1-(1/alpha)); % Kvadreras eller ej?? Mycket typos och slarv i artikeln
+c2alpha = sqrt(c1alpha * 2^(1-(1/alpha))); % Kvadreras eller ej?? Mycket typos och slarv i artikeln
 mu_4 = 3; % tror jag
 factor = c2alpha^4 * 2 * mu_4 * T;% antar alpha = 2 ekv 20 https://arxiv.org/pdf/1912.07917.pdf
 sum = 0;
