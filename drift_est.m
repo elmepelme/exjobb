@@ -2,7 +2,7 @@
 
 %% Path of time for a given x
 dy = 1/1000;
-dt = 1/5000; 
+dt = 1/1000; 
 D = 20; %diameter of integration
 x_point = 1; 
 T = 1;
