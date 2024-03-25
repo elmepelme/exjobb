@@ -1,4 +1,4 @@
-function [u_t] = u_time_simulation(x_point, dy, dt, D, T, theta)
+function [u_t, t_points] = u_time_simulation(x_point, dy, dt, D, T, theta)
 mu_A = dt * dy;
 G = @(t, y, s) exp(-((x_point - y).^2) ./ (4*theta*(t - s))) ./(2*sqrt(theta) * ((pi*(t - s)).^(1/2)) );
 t_nbr_points = T/dt;
